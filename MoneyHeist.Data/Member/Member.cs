@@ -1,5 +1,4 @@
-﻿using MoneyHeist.Data.Member;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MoneyHeist.Data
 {
