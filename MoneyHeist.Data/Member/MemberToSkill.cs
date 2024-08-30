@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MoneyHeist.Data
 {
-    public class MemberToSkill
+    public class HeistToSkill
     {
         public int ID { get; set; }
         public int MemberID { get; set; }
