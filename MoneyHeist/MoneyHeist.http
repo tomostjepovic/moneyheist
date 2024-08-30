@@ -1,0 +1,6 @@
+@MoneyHeist_HostAddress = http://localhost:5201
+
+GET {{MoneyHeist_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
