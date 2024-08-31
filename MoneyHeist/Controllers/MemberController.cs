@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Data.Dtos.Member;
+using MoneyHeist.DataAccess;
 
 namespace MoneyHeist.Controllers
 {
@@ -9,14 +11,26 @@ namespace MoneyHeist.Controllers
     public class MemberController : ControllerBase
     {
         protected readonly IMemberService memberService;
-        public MemberController(IMemberService _memberService)
+        protected readonly RepoContext repoContext;
+
+        public MemberController(IMemberService _memberService, RepoContext _repoContext)
         {
             memberService = _memberService;
+            repoContext = _repoContext;
+        }
+
+        [HttpGet]
+        [Route("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
+
+            return Ok(member);
         }
 
         [HttpPost]
         [Route("")]
-        public async Task<IActionResult> CreateAsync([FromBody] MemberDto memberDto)
+        public async Task<IActionResult> Create([FromBody] MemberDto memberDto)
         {
             var result = await memberService.CreateMember(memberDto);
 
@@ -24,7 +38,8 @@ namespace MoneyHeist.Controllers
             {
                 return BadRequest(result);
             }
-            return Created("/member/10", null);
+
+            return Created($"/member/{result.Data.ID}", null);
         }
 
     }

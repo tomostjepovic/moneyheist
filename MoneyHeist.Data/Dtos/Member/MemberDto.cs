@@ -5,6 +5,8 @@ namespace MoneyHeist.Data.Dtos.Member
 {
     public class MemberDto
     {
+        [JsonIgnore]
+        public int? ID { get; set; }
         [JsonPropertyName("name")]
         public string? Name { get; set; }
         [JsonPropertyName("sex")]

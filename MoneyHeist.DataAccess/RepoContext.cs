@@ -6,6 +6,7 @@ namespace MoneyHeist.DataAccess
     public class RepoContext: DbContext
     {
         public RepoContext() { }
+        public RepoContext(string connectionString) : base(new DbContextOptionsBuilder().UseNpgsql(connectionString).Options) { }
         public RepoContext(DbContextOptions options) : base(options) { }
         public DbSet<MemberStatus> MemberStatuses { get; set; }
         public DbSet<MemberToSkill> MemberToSkills { get; set; }
