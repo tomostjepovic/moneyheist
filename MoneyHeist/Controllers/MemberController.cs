@@ -21,7 +21,7 @@ namespace MoneyHeist.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetMember(int id)
         {
             var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
 
@@ -30,7 +30,7 @@ namespace MoneyHeist.Controllers
 
         [HttpPost]
         [Route("")]
-        public async Task<IActionResult> Create([FromBody] MemberDto memberDto)
+        public async Task<IActionResult> CreateMember([FromBody] MemberDto memberDto)
         {
             var result = await memberService.CreateMember(memberDto);
 
@@ -42,5 +42,24 @@ namespace MoneyHeist.Controllers
             return Created($"/member/{result.Data.ID}", null);
         }
 
+        [HttpPut]
+        [Route("{id}/skills")]
+        public async Task<IActionResult> UpdateMemberSkills([FromRoute] int id, [FromBody] UpdateMemberSkillsDto updateMemberSkillsDto)
+        {
+            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            var result = await memberService.UpdateMemberSkills(id, updateMemberSkillsDto);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok();
+        }
     }
 }

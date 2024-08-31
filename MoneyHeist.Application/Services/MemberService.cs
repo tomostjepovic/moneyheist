@@ -16,6 +16,79 @@ namespace MoneyHeist.Application.Services
             repoContext = _repoContext;
         }
 
+        public async Task<ServiceResult<UpdateMemberSkillsDto>> UpdateMemberSkills(int memberID, UpdateMemberSkillsDto updateMemberSkillsDto)
+        {
+            var errors = await ValidateUpdateMemberSkills(memberID, updateMemberSkillsDto);
+            if (errors.Any())
+            {
+                return ServiceResult<UpdateMemberSkillsDto>.ErrorResult("Validation errors", errors);
+            }
+
+            if (updateMemberSkillsDto.Skills != null && updateMemberSkillsDto.Skills.Any())
+            {
+                var existingSkills = repoContext.MemberToSkills.Where(x => x.MemberID == memberID);
+
+                repoContext.MemberToSkills.RemoveRange(existingSkills);
+
+                foreach (var memberToSkillDto in updateMemberSkillsDto.Skills)
+                {
+                    await InsertMemberToSkill(memberID, memberToSkillDto);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill))
+            {
+                var member = await repoContext.Members.SingleAsync(x => x.ID == memberID);
+                var mainSkill = await repoContext.Skills.SingleAsync(x => x.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
+                member.MainSkillID = mainSkill.ID;
+
+                repoContext.Update(member);
+                await repoContext.SaveChangesAsync();
+            }
+
+            return ServiceResult<UpdateMemberSkillsDto>.SuccessResult(updateMemberSkillsDto);
+        }
+
+        private async Task<List<string>> ValidateUpdateMemberSkills(int memberID, UpdateMemberSkillsDto updateMemberSkillsDto)
+        {
+            List<string> errors = new List<string>();
+
+            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == memberID);
+            if (member == null)
+            {
+                errors.Add("Member doesnt exists");
+            }
+
+            if (string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill) && (updateMemberSkillsDto.Skills == null || !updateMemberSkillsDto.Skills.Any()))
+            {
+                errors.Add("At least one skill or main skill must be provided");
+            }
+
+            if (!string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill))
+            {
+                if (updateMemberSkillsDto.Skills != null && updateMemberSkillsDto.Skills.Any())
+                {
+                    var mainSkillExistsInNewSkills = updateMemberSkillsDto.Skills.Any(x => x.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
+                    if (!mainSkillExistsInNewSkills)
+                    {
+                        errors.Add("Main skill doesnt exist in new skill set");
+                    }
+                }
+                else
+                {
+                    var mainSkillExistsInExistingMembersSkills = await repoContext.MemberToSkills.AnyAsync(
+                        x => x.MemberID == memberID && x.Skill.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
+                    if (!mainSkillExistsInExistingMembersSkills)
+                    {
+                        errors.Add("Main skill doesnt exist in existing skill set");
+                    }
+                }
+            }
+
+            return errors;
+
+        }
+
         public async Task<ServiceResult<MemberDto>> CreateMember(MemberDto memberDto)
         {
             var errors = await ValidateCreateMemberAsync(memberDto);
@@ -44,14 +117,13 @@ namespace MoneyHeist.Application.Services
                 await InsertMemberToSkill(member.ID, memberToSkillDto);
             }
 
-            if (memberDto.MainSkill != null)
+            if (!string.IsNullOrEmpty(memberDto.MainSkill))
             {
                 var mainSkill = await repoContext.Skills.SingleAsync(x => x.Name.ToLower() == memberDto.MainSkill.ToLower());
                 member.MainSkillID = mainSkill.ID;
 
                 repoContext.Update(member);
                 await repoContext.SaveChangesAsync();
-
             }
 
             return ServiceResult<MemberDto>.SuccessResult(memberDto);
@@ -131,7 +203,6 @@ namespace MoneyHeist.Application.Services
 
         private async Task InsertMemberToSkill(int memberID, MemberToSkillDto memberToSkillDto)
         {
-
             var skill = await GetOrInsertSkillIfNotExists(memberToSkillDto.Name);
             var memberToSkill = new MemberToSkill
             {
@@ -140,10 +211,8 @@ namespace MoneyHeist.Application.Services
                 Level = memberToSkillDto.LevelNumeric
             };
 
-
             await repoContext.AddAsync(memberToSkill);
             await repoContext.SaveChangesAsync();
-
         }
 
         private async Task<Skill> GetOrInsertSkillIfNotExists(string name)
