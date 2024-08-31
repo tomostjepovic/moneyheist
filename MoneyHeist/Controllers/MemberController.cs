@@ -39,6 +39,7 @@ namespace MoneyHeist.Controllers
                 return BadRequest(result);
             }
 
+            // TODO: set URI correctly
             return Created($"/member/{result.Data.ID}", null);
         }
 
@@ -59,7 +60,10 @@ namespace MoneyHeist.Controllers
                 return BadRequest(result);
             }
 
-            return Ok();
+            // TODO: set URI correctly
+            Response.Headers["Content-Location"] = $"/member/{id}/skills";
+
+            return NoContent();
         }
     }
 }
