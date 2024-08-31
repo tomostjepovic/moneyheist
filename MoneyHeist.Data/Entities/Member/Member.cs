@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MoneyHeist.Data
+namespace MoneyHeist.Data.Entities
 {
     public class Member
     {

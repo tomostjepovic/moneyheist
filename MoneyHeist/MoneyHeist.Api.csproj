@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MoneyHeist.Application\MoneyHeist.Application.csproj" />
     <ProjectReference Include="..\MoneyHeist.DataAccess\MoneyHeist.DataAccess.csproj" />
     <ProjectReference Include="..\MoneyHeist.Data\MoneyHeist.Data.csproj" />
   </ItemGroup>

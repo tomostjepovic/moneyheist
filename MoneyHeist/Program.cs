@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using MoneyHeist.Application.Interfaces;
+using MoneyHeist.Application.Services;
 using MoneyHeist.DataAccess;
 
 namespace MoneyHeist
@@ -12,6 +13,7 @@ namespace MoneyHeist
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddScoped<IMemberService, MemberService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

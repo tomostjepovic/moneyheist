@@ -1,4 +1,4 @@
-﻿namespace MoneyHeist.Data
+﻿namespace MoneyHeist.Data.Entities
 {
     public class Gender
     {

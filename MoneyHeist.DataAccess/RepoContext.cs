@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MoneyHeist.Data;
+using MoneyHeist.Data.Entities;
 
 namespace MoneyHeist.DataAccess
 {
@@ -11,7 +11,7 @@ namespace MoneyHeist.DataAccess
         public DbSet<MemberToSkill> MemberToSkills { get; set; }
         public DbSet<Skill> Skills { get; set; }
         public DbSet<Gender> Genders { get; set; }
-        public DbSet<Member> Member { get; set; }
+        public DbSet<Member> Members { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
