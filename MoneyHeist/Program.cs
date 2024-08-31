@@ -1,4 +1,8 @@
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using MoneyHeist.DataAccess;
+
 namespace MoneyHeist
 {
     public class Program
@@ -13,6 +17,11 @@ namespace MoneyHeist
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            var Configuration = builder.Configuration;
+            builder.Services.AddDbContext<RepoContext>(options =>
+                    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"))
+                    .UseSnakeCaseNamingConvention()
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
             var app = builder.Build();
 
