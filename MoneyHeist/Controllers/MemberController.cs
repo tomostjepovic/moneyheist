@@ -65,5 +65,32 @@ namespace MoneyHeist.Controllers
 
             return NoContent();
         }
+
+        [HttpDelete]
+        [Route("{id}/skills/{skillName}")]
+        public async Task<IActionResult> DeleteMemberSkills([FromRoute] int id, [FromRoute] string skillName)
+        {
+            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            var skill = await repoContext.MemberToSkills.SingleOrDefaultAsync(x => x.MemberID == id && x.Skill.Name.ToLower() == skillName.ToLower());
+            if (skill == null)
+            {
+                return NotFound();
+            }
+
+            var result = await memberService.DeleteMemberSkills(id, skillName);
+
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return NoContent();
+        }
+
     }
 }

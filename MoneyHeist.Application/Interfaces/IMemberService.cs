@@ -7,5 +7,6 @@ namespace MoneyHeist.Application.Interfaces
     {
         public Task<ServiceResult<MemberDto>> CreateMember(MemberDto memberDto);
         public Task<ServiceResult<UpdateMemberSkillsDto>> UpdateMemberSkills(int memberID, UpdateMemberSkillsDto updateMemberSkillsDto);
+        public Task<ServiceResult<UpdateMemberSkillsDto>> DeleteMemberSkills(int memberID, string skillName);
     }
 }

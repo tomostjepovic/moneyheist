@@ -16,6 +16,55 @@ namespace MoneyHeist.Application.Services
             repoContext = _repoContext;
         }
 
+        public async Task<ServiceResult<UpdateMemberSkillsDto>> DeleteMemberSkills(int memberID, string skillName) 
+        {
+            var errors = await ValidateDeleteMemberSkills(memberID, skillName);
+            if (errors.Any())
+            {
+                return ServiceResult<UpdateMemberSkillsDto>.ErrorResult("Validation errors", errors);
+            }
+        }
+
+        private async Task<List<string>> ValidateDeleteMemberSkills(int memberID, string skillName)
+        {
+            List<string> errors = new List<string>();
+
+            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == memberID);
+            if (member == null)
+            {
+                errors.Add("Member doesnt exists");
+            }
+
+            if (string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill) && (updateMemberSkillsDto.Skills == null || !updateMemberSkillsDto.Skills.Any()))
+            {
+                errors.Add("At least one skill or main skill must be provided");
+            }
+
+            if (!string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill))
+            {
+                if (updateMemberSkillsDto.Skills != null && updateMemberSkillsDto.Skills.Any())
+                {
+                    var mainSkillExistsInNewSkills = updateMemberSkillsDto.Skills.Any(x => x.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
+                    if (!mainSkillExistsInNewSkills)
+                    {
+                        errors.Add("Main skill doesnt exist in new skill set");
+                    }
+                }
+                else
+                {
+                    var mainSkillExistsInExistingMembersSkills = await repoContext.MemberToSkills.AnyAsync(
+                        x => x.MemberID == memberID && x.Skill.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
+                    if (!mainSkillExistsInExistingMembersSkills)
+                    {
+                        errors.Add("Main skill doesnt exist in existing skill set");
+                    }
+                }
+            }
+
+            return errors;
+
+        }
+
         public async Task<ServiceResult<UpdateMemberSkillsDto>> UpdateMemberSkills(int memberID, UpdateMemberSkillsDto updateMemberSkillsDto)
         {
             var errors = await ValidateUpdateMemberSkills(memberID, updateMemberSkillsDto);

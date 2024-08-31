@@ -3,11 +3,11 @@
     public class ServiceResult<T>
     {
         public bool Success { get; set; }
-        public T Data { get; set; }
+        public T? Data { get; set; }
         public string? ErrorMessage { get; set; }
         public IEnumerable<string>? Errors { get; set; }
 
-        public ServiceResult(bool success, T data, string? errorMessage = null, IEnumerable<string>? errors = null)
+        public ServiceResult(bool success, T? data, string? errorMessage = null, IEnumerable<string>? errors = null)
         {
             Success = success;
             Data = data;
@@ -15,7 +15,7 @@
             Errors = errors;
         }
 
-        public static ServiceResult<T> SuccessResult(T data)
+        public static ServiceResult<T> SuccessResult(T? data)
         {
             return new ServiceResult<T>(true, data);
         }
