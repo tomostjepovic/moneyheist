@@ -4,6 +4,8 @@ using MoneyHeist.Data.Dtos.Member;
 using MoneyHeist.Data.Entities;
 using MoneyHeist.Data.Models;
 using MoneyHeist.DataAccess;
+using System.Net;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MoneyHeist.Application.Services
 {
@@ -16,61 +18,36 @@ namespace MoneyHeist.Application.Services
             repoContext = _repoContext;
         }
 
-        public async Task<ServiceResult<UpdateMemberSkillsDto>> DeleteMemberSkills(int memberID, string skillName) 
+        public async Task<ServiceResult> DeleteMemberSkills(int memberID, string skillName) 
         {
-            var errors = await ValidateDeleteMemberSkills(memberID, skillName);
-            if (errors.Any())
+            var memberSkill = await repoContext.MemberToSkills.SingleOrDefaultAsync(x => x.MemberID == memberID && x.Skill.Name.ToLower() == skillName.ToLower());
+
+            if (memberSkill == null)
             {
-                return ServiceResult<UpdateMemberSkillsDto>.ErrorResult("Validation errors", errors);
+                return ServiceResult.ErrorResult("Member or member skill doesnt exist");
             }
+
+            if (memberSkill != null)
+            {
+                repoContext.MemberToSkills.Remove(memberSkill);
+                await repoContext.SaveChangesAsync();
+            }
+
+            return ServiceResult.SuccessResult();
         }
 
-        private async Task<List<string>> ValidateDeleteMemberSkills(int memberID, string skillName)
+        private bool MemberSkillsHasDuplicates(List<MemberToSkillDto> memberSkills)
         {
-            List<string> errors = new List<string>();
-
-            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == memberID);
-            if (member == null)
-            {
-                errors.Add("Member doesnt exists");
-            }
-
-            if (string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill) && (updateMemberSkillsDto.Skills == null || !updateMemberSkillsDto.Skills.Any()))
-            {
-                errors.Add("At least one skill or main skill must be provided");
-            }
-
-            if (!string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill))
-            {
-                if (updateMemberSkillsDto.Skills != null && updateMemberSkillsDto.Skills.Any())
-                {
-                    var mainSkillExistsInNewSkills = updateMemberSkillsDto.Skills.Any(x => x.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
-                    if (!mainSkillExistsInNewSkills)
-                    {
-                        errors.Add("Main skill doesnt exist in new skill set");
-                    }
-                }
-                else
-                {
-                    var mainSkillExistsInExistingMembersSkills = await repoContext.MemberToSkills.AnyAsync(
-                        x => x.MemberID == memberID && x.Skill.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
-                    if (!mainSkillExistsInExistingMembersSkills)
-                    {
-                        errors.Add("Main skill doesnt exist in existing skill set");
-                    }
-                }
-            }
-
-            return errors;
-
+            var skills = memberSkills.Select(x => x.Name.ToLower()).ToList();
+            return skills.GroupBy(x => x).Any(grp => grp.Count() > 1);
         }
 
-        public async Task<ServiceResult<UpdateMemberSkillsDto>> UpdateMemberSkills(int memberID, UpdateMemberSkillsDto updateMemberSkillsDto)
+        public async Task<ServiceResult> UpdateMemberSkills(int memberID, MemberSkillsDto updateMemberSkillsDto)
         {
             var errors = await ValidateUpdateMemberSkills(memberID, updateMemberSkillsDto);
             if (errors.Any())
             {
-                return ServiceResult<UpdateMemberSkillsDto>.ErrorResult("Validation errors", errors);
+                return ServiceResult.ErrorResult("Validation errors", errors);
             }
 
             if (updateMemberSkillsDto.Skills != null && updateMemberSkillsDto.Skills.Any())
@@ -95,10 +72,10 @@ namespace MoneyHeist.Application.Services
                 await repoContext.SaveChangesAsync();
             }
 
-            return ServiceResult<UpdateMemberSkillsDto>.SuccessResult(updateMemberSkillsDto);
+            return ServiceResult.SuccessResult();
         }
 
-        private async Task<List<string>> ValidateUpdateMemberSkills(int memberID, UpdateMemberSkillsDto updateMemberSkillsDto)
+        private async Task<List<string>> ValidateUpdateMemberSkills(int memberID, MemberSkillsDto updateMemberSkillsDto)
         {
             List<string> errors = new List<string>();
 
@@ -111,6 +88,15 @@ namespace MoneyHeist.Application.Services
             if (string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill) && (updateMemberSkillsDto.Skills == null || !updateMemberSkillsDto.Skills.Any()))
             {
                 errors.Add("At least one skill or main skill must be provided");
+            }
+
+            if (updateMemberSkillsDto.Skills != null && updateMemberSkillsDto.Skills.Any())
+            {
+                var hasDuplicateSkils = MemberSkillsHasDuplicates(updateMemberSkillsDto.Skills);
+                if (hasDuplicateSkils)
+                {
+                    errors.Add($"Member cannot have duplicate skills");
+                }
             }
 
             if (!string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill))
@@ -138,13 +124,13 @@ namespace MoneyHeist.Application.Services
 
         }
 
-        public async Task<ServiceResult<MemberDto>> CreateMember(MemberDto memberDto)
+        public async Task<CreateMemberServiceResult> CreateMember(MemberDto memberDto)
         {
             var errors = await ValidateCreateMemberAsync(memberDto);
 
             if (errors.Any())
             {
-                return ServiceResult<MemberDto>.ErrorResult("Validation errors", errors);
+                return new CreateMemberServiceResult(false, "Validation errors", errors);
             }
 
             var gender = await repoContext.Genders.FirstOrDefaultAsync(x => x.Name == memberDto.Sex);
@@ -175,7 +161,7 @@ namespace MoneyHeist.Application.Services
                 await repoContext.SaveChangesAsync();
             }
 
-            return ServiceResult<MemberDto>.SuccessResult(memberDto);
+            return new CreateMemberServiceResult(true);
         }
 
         private async Task<List<string>> ValidateCreateMemberAsync(MemberDto memberDto)
@@ -234,8 +220,7 @@ namespace MoneyHeist.Application.Services
                 errors.Add($"Please send correct status. Available values are: {string.Join(", ", allMemberStatuses)}");
             }
 
-            var skills = memberDto.Skills.Select(x => x.Name.ToLower()).ToList();
-            var hasDuplicateSkils = skills.GroupBy(x => x).Any(grp => grp.Count() > 1);
+            var hasDuplicateSkils = MemberSkillsHasDuplicates(memberDto.Skills);
             if (hasDuplicateSkils)
             {
                 errors.Add($"Member cannot have duplicate skills");

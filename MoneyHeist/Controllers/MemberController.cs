@@ -40,12 +40,12 @@ namespace MoneyHeist.Controllers
             }
 
             // TODO: set URI correctly
-            return Created($"/member/{result.Data.ID}", null);
+            return Created($"/member/{result.MemberID}", null);
         }
 
         [HttpPut]
         [Route("{id}/skills")]
-        public async Task<IActionResult> UpdateMemberSkills([FromRoute] int id, [FromBody] UpdateMemberSkillsDto updateMemberSkillsDto)
+        public async Task<IActionResult> UpdateMemberSkills([FromRoute] int id, [FromBody] MemberSkillsDto updateMemberSkillsDto)
         {
             var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
             if (member == null)
@@ -70,12 +70,6 @@ namespace MoneyHeist.Controllers
         [Route("{id}/skills/{skillName}")]
         public async Task<IActionResult> DeleteMemberSkills([FromRoute] int id, [FromRoute] string skillName)
         {
-            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
-            if (member == null)
-            {
-                return NotFound();
-            }
-
             var skill = await repoContext.MemberToSkills.SingleOrDefaultAsync(x => x.MemberID == id && x.Skill.Name.ToLower() == skillName.ToLower());
             if (skill == null)
             {

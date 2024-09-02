@@ -1,28 +1,28 @@
-﻿namespace MoneyHeist.Data.Models
+﻿using System.Net;
+
+namespace MoneyHeist.Data.Models
 {
-    public class ServiceResult<T>
+    public class ServiceResult
     {
         public bool Success { get; set; }
-        public T? Data { get; set; }
-        public string? ErrorMessage { get; set; }
-        public IEnumerable<string>? Errors { get; set; }
+        public string? ErrorMessage { get; set; } = string.Empty;
+        public IEnumerable<string>? Errors { get; set; } = new List<string>();
 
-        public ServiceResult(bool success, T? data, string? errorMessage = null, IEnumerable<string>? errors = null)
+        public ServiceResult(bool success, string? errorMessage = null, IEnumerable<string>? errors = null)
         {
             Success = success;
-            Data = data;
             ErrorMessage = errorMessage;
             Errors = errors;
         }
 
-        public static ServiceResult<T> SuccessResult(T? data)
+        public static ServiceResult SuccessResult()
         {
-            return new ServiceResult<T>(true, data);
+            return new ServiceResult(true);
         }
 
-        public static ServiceResult<T> ErrorResult(string errorMessage, IEnumerable<string>? errors = null)
+        public static ServiceResult ErrorResult(string errorMessage, IEnumerable<string>? errors = null)
         {
-            return new ServiceResult<T>(false, default, errorMessage, errors);
+            return new ServiceResult(false, errorMessage, errors);
         }
     }
 }
