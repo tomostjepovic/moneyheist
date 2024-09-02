@@ -13,10 +13,18 @@ namespace MoneyHeist.DataAccess
         public DbSet<Skill> Skills { get; set; }
         public DbSet<Gender> Genders { get; set; }
         public DbSet<Member> Members { get; set; }
+        public DbSet<Heist> Heists { get; set; }
+        public DbSet<HeistToSkill> HeistToSkill { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<Heist>()
+                .HasIndex(x => x.Name).IsUnique();
+
+            builder.Entity<HeistToSkill>()
+                .HasIndex(x => new { x.HeistID, x.SkillID, x.Level }).IsUnique();
 
             builder.Entity<Gender>()
                 .HasIndex(x => x.Name).IsUnique();

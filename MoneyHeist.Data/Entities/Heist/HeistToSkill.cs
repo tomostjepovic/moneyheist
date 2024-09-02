@@ -14,5 +14,6 @@ namespace MoneyHeist.Data.Entities
         public Skill Skill { get; set; }
         [Range(1, 10)]
         public int Level { get; set; }
+        public int Members { get; set; }
     }
 }
