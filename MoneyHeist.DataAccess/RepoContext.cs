@@ -14,7 +14,7 @@ namespace MoneyHeist.DataAccess
         public DbSet<Gender> Genders { get; set; }
         public DbSet<Member> Members { get; set; }
         public DbSet<Heist> Heists { get; set; }
-        public DbSet<HeistToSkill> HeistToSkill { get; set; }
+        public DbSet<HeistToSkill> HeistToSkills { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
