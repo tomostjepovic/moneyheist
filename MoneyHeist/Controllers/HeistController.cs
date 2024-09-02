@@ -40,7 +40,7 @@ namespace MoneyHeist.Controllers
             }
 
             // TODO: set URI correctly
-            return Created($"/member/{result.HeistID}", null);
+            return Created($"/heist/{result.HeistID}", null);
         }
     }
 }

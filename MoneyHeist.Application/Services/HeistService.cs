@@ -43,7 +43,10 @@ namespace MoneyHeist.Application.Services
                 await InsertHeistToSkill(heist.ID, heistToSkillDto);
             }            
 
-            return new CreateHeistServiceResult(true);
+            return new CreateHeistServiceResult(true)
+            {
+                HeistID = heist.ID
+            };
         }
 
         private async Task<List<string>> ValidateCreateHeistAsync(HeistDto heistDto)

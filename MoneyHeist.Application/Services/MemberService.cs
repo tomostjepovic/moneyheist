@@ -162,7 +162,10 @@ namespace MoneyHeist.Application.Services
                 await repoContext.SaveChangesAsync();
             }
 
-            return new CreateMemberServiceResult(true);
+            return new CreateMemberServiceResult(true)
+            {
+                MemberID = member.ID,
+            };
         }
 
         private async Task<List<string>> ValidateCreateMemberAsync(MemberDto memberDto)
