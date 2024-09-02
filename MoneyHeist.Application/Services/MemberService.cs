@@ -92,10 +92,10 @@ namespace MoneyHeist.Application.Services
 
             if (updateMemberSkillsDto.Skills != null && updateMemberSkillsDto.Skills.Any())
             {
-                var hasDuplicateSkils = MemberSkillsHasDuplicates(updateMemberSkillsDto.Skills);
-                if (hasDuplicateSkils)
+                var skillsErrors = ValidateMemberSkills(updateMemberSkillsDto.Skills);
+                if (skillsErrors != null)
                 {
-                    errors.Add($"Member cannot have duplicate skills");
+                    errors.AddRange(skillsErrors);
                 }
             }
 
@@ -220,19 +220,36 @@ namespace MoneyHeist.Application.Services
                 errors.Add($"Please send correct status. Available values are: {string.Join(", ", allMemberStatuses)}");
             }
 
-            var hasDuplicateSkils = MemberSkillsHasDuplicates(memberDto.Skills);
+            var skillsErrors = ValidateMemberSkills(memberDto.Skills);
+            if (skillsErrors != null)
+            {
+                errors.AddRange(skillsErrors);
+            }            
+
+            return errors;
+        }
+
+        private List<string> ValidateMemberSkills(List<MemberToSkillDto> memberSkills)
+        {
+            List<string> errors = new List<string>();
+            var hasDuplicateSkils = MemberSkillsHasDuplicates(memberSkills);
             if (hasDuplicateSkils)
             {
                 errors.Add($"Member cannot have duplicate skills");
             }
 
-            var skillWithIncorectLevelExists = memberDto.Skills.Any(x => !x.LevelIsValid);
+            var skillWithIncorectLevelExists = MemberSkillsHasInvalidLevel(memberSkills);
             if (skillWithIncorectLevelExists)
             {
                 errors.Add($"Skill level can only contain '*' characters with a maximum of 10.");
             }
 
             return errors;
+        }
+
+        public bool MemberSkillsHasInvalidLevel(List<MemberToSkillDto> memberSkills)
+        {
+            return memberSkills.Any(x => !x.LevelIsValid);
         }
 
         private async Task InsertMemberToSkill(int memberID, MemberToSkillDto memberToSkillDto)

@@ -2,7 +2,7 @@
 
 namespace MoneyHeist.Data.Dtos.Member
 {
-    public class UpdateMemberSkillsDto
+    public class MemberSkillsDto
     {
         [JsonPropertyName("skills")]
         public List<MemberToSkillDto>? Skills { get; set; }
