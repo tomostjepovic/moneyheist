@@ -15,6 +15,8 @@ namespace MoneyHeist.Data.Dtos.Heist
         public DateTime? StartTime { get; set; }
         [JsonPropertyName("endTime")]
         public DateTime? EndTime { get; set; }
+        [JsonPropertyName("status")]
+        public string? Status { get; set; }
         [JsonPropertyName("skills")]
         public List<HeistToSkillDto>? Skills { get; set; }
     }

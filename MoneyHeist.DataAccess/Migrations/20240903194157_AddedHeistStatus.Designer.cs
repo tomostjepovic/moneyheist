@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyHeist.DataAccess;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MoneyHeist.DataAccess.Migrations
 {
     [DbContext(typeof(RepoContext))]
-    partial class RepoContextModelSnapshot : ModelSnapshot
+    [Migration("20240903194157_AddedHeistStatus")]
+    partial class AddedHeistStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,6 +110,10 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_in_progress");
 
+                    b.Property<bool>("IsInitial")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_initial");
+
                     b.Property<bool>("IsPlanning")
                         .HasColumnType("boolean")
                         .HasColumnName("is_planning");
@@ -121,9 +128,9 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("ID")
-                        .HasName("pk_heist_statuses");
+                        .HasName("pk_heist_status");
 
-                    b.ToTable("heist_statuses", (string)null);
+                    b.ToTable("heist_status", (string)null);
                 });
 
             modelBuilder.Entity("MoneyHeist.Data.Entities.HeistToSkill", b =>
@@ -307,7 +314,7 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasForeignKey("StatusID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_heists_heist_statuses_status_id");
+                        .HasConstraintName("fk_heists_heist_status_status_id");
 
                     b.Navigation("Status");
                 });

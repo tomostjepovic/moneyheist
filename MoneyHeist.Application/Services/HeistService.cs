@@ -3,8 +3,10 @@ using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Application.Mappers;
 using MoneyHeist.Data.Dtos.Heist;
 using MoneyHeist.Data.Entities;
+using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.Data.Models;
 using MoneyHeist.DataAccess;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MoneyHeist.Application.Services
 {
@@ -17,7 +19,31 @@ namespace MoneyHeist.Application.Services
         {
             repoContext = _repoContext;
             skillService = _skillService;
-        }   
+        }
+
+        public async Task<ServiceResult> StartHeist(int id)
+        {
+            var heist = await repoContext.Heists.SingleOrDefaultAsync(x => x.ID == id);
+            if (heist == null)
+            {
+                return ServiceResult.ErrorResult(HeistErrors.HeistNotFound);
+            }
+
+            var heistStatus = await repoContext.Heists.Where(x => x.ID == id).Select(x => x.Status).SingleOrDefaultAsync();
+
+            if (heistStatus == null || !heistStatus.IsReady) 
+            {
+                return ServiceResult.ErrorResult(HeistErrors.HeistStatusNotReady);
+            }
+
+            var statusInProgress = await repoContext.HeistStatuses.SingleAsync(x => x.IsInProgress);
+
+            heist.StatusID = statusInProgress.ID;
+            repoContext.Update(heist);
+            await repoContext.SaveChangesAsync();
+
+            return ServiceResult.SuccessResult();
+        }
 
         public async Task<List<HeistToSkillDto>> GetHeistSkills(int id)
         {
@@ -84,6 +110,7 @@ namespace MoneyHeist.Application.Services
         public async Task<HeistDto?> GetHeistById(int id)
         {
             var heist = await repoContext.Heists
+                .Include(x => x.Status)
                 .Include(x => x.Skills)
                 .ThenInclude(x => x.Skill)
                 .SingleOrDefaultAsync(x => x.ID == id);
@@ -104,11 +131,14 @@ namespace MoneyHeist.Application.Services
                 return new CreateHeistServiceResult(false, "Validation errors", errors);
             }
 
+            var initialStatus = await repoContext.HeistStatuses.SingleAsync(x => x.IsPlanning);
+
             var heist = new Heist();
             heist.Name = heistDto.Name;
             heist.Start = heistDto.StartTime.Value;
             heist.End = heistDto.EndTime.Value;
             heist.Location = heistDto.Location;
+            heist.StatusID = initialStatus.ID;
 
             await repoContext.AddAsync(heist);
             await repoContext.SaveChangesAsync();

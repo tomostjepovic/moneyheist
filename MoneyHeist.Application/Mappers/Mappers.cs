@@ -16,6 +16,7 @@ namespace MoneyHeist.Application.Mappers
                 StartTime = entity.Start,
                 EndTime = entity.End,
                 Location = entity.Location,
+                Status = entity.Status.Name,
                 Skills = entity.Skills.Select(x => x.ToDto()).ToList()
             };
         }

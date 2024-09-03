@@ -12,5 +12,6 @@ namespace MoneyHeist.Application.Interfaces
         public bool HeistHasStarted(Heist heist);
         public Task<List<HeistToSkillDto>> GetHeistSkills(int id);
         public Task<List<HeistToSkillDto>> GetHeistEligibleMembers(int id);
+        public Task<ServiceResult> StartHeist(int id);
     }
 }

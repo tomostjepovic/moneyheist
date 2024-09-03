@@ -15,9 +15,12 @@ namespace MoneyHeist.DataAccess
         public DbSet<Member> Members { get; set; }
         public DbSet<Heist> Heists { get; set; }
         public DbSet<HeistToSkill> HeistToSkills { get; set; }
+        public DbSet<HeistStatus> HeistStatuses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            // TODO: define on cascade delete restrict for needed entities
+
             base.OnModelCreating(builder);
 
             builder.Entity<Heist>()

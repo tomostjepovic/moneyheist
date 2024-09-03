@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Application.Services;
 using MoneyHeist.Data.Dtos.Heist;
+using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.DataAccess;
 
 namespace MoneyHeist.Controllers
@@ -44,6 +45,31 @@ namespace MoneyHeist.Controllers
             }
 
             return Ok(heist.Skills);
+        }
+
+        [HttpPut]
+        [Route("{id}/start")]
+        public async Task<IActionResult> StartHeist(int id)
+        {
+            var result = await heistService.StartHeist(id);
+
+            if (!result.Success)
+            {
+                if (result.ErrorMessage == HeistErrors.HeistNotFound)
+                {
+                    return NotFound();
+                }
+                if (result.ErrorMessage == HeistErrors.HeistStatusNotReady)
+                {
+                    return StatusCode(StatusCodes.Status405MethodNotAllowed);
+                }
+
+                return BadRequest(result.ErrorMessage);
+            }
+
+            Response.Headers["Location"] = $"/heist/{id}/status";
+
+            return Ok();
         }
 
         // TODO: implement when status added to heist
@@ -121,7 +147,7 @@ namespace MoneyHeist.Controllers
             }
 
             // TODO: set URI correctly
-            Response.Headers["Content-Location"] = $"/heist/{id}/skills";
+            Response.Headers["Location"] = $"/heist/{id}/skills";
 
             return NoContent();
         }
