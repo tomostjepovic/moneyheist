@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Application.Services;
 using MoneyHeist.Data.Dtos.Heist;
-using MoneyHeist.Data.Dtos.Member;
 using MoneyHeist.DataAccess;
 
 namespace MoneyHeist.Controllers
@@ -23,11 +22,64 @@ namespace MoneyHeist.Controllers
 
         [HttpGet]
         [Route("{id}")]
-        public async Task<IActionResult> GetMember(int id)
+        public async Task<IActionResult> GetHeist(int id)
         {
-            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
+            var heist = await heistService.GetHeistById(id);
+            if (heist == null)
+            {
+                return NotFound();
+            }
 
-            return Ok(member);
+            return Ok(heist);
+        }
+
+        [HttpGet]
+        [Route("{id}/skills")]
+        public async Task<IActionResult> GetHeistSkills(int id)
+        {
+            var heist = await heistService.GetHeistById(id);
+            if (heist == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(heist.Skills);
+        }
+
+        // TODO: implement when status added to heist
+        [HttpGet]
+        [Route("{id}/status")]
+        public async Task<IActionResult> GetHeistStatus(int id)
+        {
+            var heist = await heistService.GetHeistById(id);
+            if (heist == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new
+            { });
+        }
+
+        [HttpGet]
+        [Route("{id}/eligible_members")]
+        public async Task<IActionResult> GetEligibleMembers(int id)
+        {
+            var heist = await heistService.GetHeistById(id);
+            if (heist == null)
+            {
+                return NotFound();
+            }
+
+            var heistSkills = await heistService.GetHeistSkills(id);
+
+            var result = new HeistEligibleMembersDto
+            {
+                Skills = heistSkills,
+            };
+            //var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
+
+            return Ok(result);
         }
 
         [HttpPost]

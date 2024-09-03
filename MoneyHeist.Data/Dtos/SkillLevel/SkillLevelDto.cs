@@ -12,6 +12,7 @@ namespace MoneyHeist.Data.Dtos.SkillLevel
 
         [JsonIgnore]
         public abstract string ValidationRegexExpr { get; set; }
+        [JsonIgnore]
         public bool LevelIsValid
         {
             get
@@ -27,6 +28,7 @@ namespace MoneyHeist.Data.Dtos.SkillLevel
             }
         }
 
+        [JsonIgnore]
         public int LevelNumeric
         {
             get

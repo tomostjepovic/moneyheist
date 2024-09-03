@@ -23,9 +23,26 @@ namespace MoneyHeist.Controllers
         [Route("{id}")]
         public async Task<IActionResult> GetMember(int id)
         {
-            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
+            var member = await memberService.GetMemberById(id);
+            if (member == null)
+            {
+                return NotFound();
+            }
 
             return Ok(member);
+        }
+
+        [HttpGet]
+        [Route("{id}/skills")]
+        public async Task<IActionResult> GetMemberSkills(int id)
+        {
+            var member = await memberService.GetMemberById(id);
+            if (member == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(member.Skills);
         }
 
         [HttpPost]

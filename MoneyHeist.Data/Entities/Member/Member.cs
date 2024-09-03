@@ -16,5 +16,7 @@ namespace MoneyHeist.Data.Entities
         public int StatusID { get; set; }
         [ForeignKey(nameof(StatusID))]
         public MemberStatus Status { get; set; }
+
+        public List<MemberToSkill> Skills { get; set; }
     }
 }

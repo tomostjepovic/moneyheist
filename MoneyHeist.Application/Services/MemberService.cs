@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
+using MoneyHeist.Application.Mappers;
 using MoneyHeist.Data.Dtos.Member;
 using MoneyHeist.Data.Entities;
 using MoneyHeist.Data.Models;
@@ -17,6 +18,22 @@ namespace MoneyHeist.Application.Services
         {
             repoContext = _repoContext;
             skillService = _skillService;
+        }
+
+        public async Task<MemberDto?> GetMemberById(int id)
+        {
+            var member = await repoContext.Members
+                .Include(x => x.MainSkill)
+                .Include(x => x.Status)
+                .Include(x => x.Gender)
+                .Include(x => x.Skills)
+                .ThenInclude(x => x.Skill).SingleOrDefaultAsync(x => x.ID == id);
+            if (member == null) 
+            {
+                return null;
+            }
+
+            return member.ToDto();
         }
 
         public async Task<ServiceResult> DeleteMemberSkills(int memberID, string skillName) 

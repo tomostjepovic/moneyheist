@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
+using MoneyHeist.Application.Mappers;
 using MoneyHeist.Data.Dtos.Heist;
 using MoneyHeist.Data.Entities;
 using MoneyHeist.Data.Models;
@@ -16,6 +17,18 @@ namespace MoneyHeist.Application.Services
         {
             repoContext = _repoContext;
             skillService = _skillService;
+        }   
+
+        public async Task<List<HeistToSkillDto>> GetHeistSkills(int id)
+        {
+            var heistSkills = await repoContext.HeistToSkills.Include(x => x.Skill).Where(x => x.HeistID == id).ToListAsync();
+            return heistSkills.Select(x => x.ToDto()).ToList();
+        }
+
+
+        public async Task<List<HeistToSkillDto>> GetHeistEligibleMembers(int id)
+        {
+            return null;
         }
 
         public async Task<ServiceResult> UpdateHeistSkills(int heistID, HeistSkillsDto updateHeistSkillsDto)
@@ -68,14 +81,18 @@ namespace MoneyHeist.Application.Services
             repoContext.HeistToSkills.RemoveRange(existingSkills);
         } 
 
-        public async Task<HeistDto> GetHeistById(int id)
+        public async Task<HeistDto?> GetHeistById(int id)
         {
-            var heist = repoContext.Heists.SingleOrDefault(x => x.ID == id);
+            var heist = await repoContext.Heists
+                .Include(x => x.Skills)
+                .ThenInclude(x => x.Skill)
+                .SingleOrDefaultAsync(x => x.ID == id);
             if (heist == null)
             {
                 return null;
             }
-            return HeistToHeistDto(heist);
+
+            return heist.ToDto();
         }
 
         public async Task<CreateHeistServiceResult> CreateHeist(HeistDto heistDto)
@@ -213,20 +230,6 @@ namespace MoneyHeist.Application.Services
 
             await repoContext.AddAsync(heistToSkill);
             await repoContext.SaveChangesAsync();
-        }   
-        
-
-        // mappers
-        private HeistDto HeistToHeistDto(Heist heist)
-        {
-            return new HeistDto
-            {
-                ID = heist.ID,
-                EndTime = heist.End,
-                StartTime = heist.Start,
-                Location = heist.Location,
-                Name = heist.Name
-            };
         }
     }
 }

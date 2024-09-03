@@ -23,6 +23,12 @@ namespace MoneyHeist.DataAccess
             builder.Entity<Heist>()
                 .HasIndex(x => x.Name).IsUnique();
 
+            builder.Entity<Heist>()
+                .HasMany(x => x.Skills)
+                .WithOne(x => x.Heist)
+                .HasForeignKey(x => x.HeistID)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Entity<HeistToSkill>()
                 .HasIndex(x => new { x.HeistID, x.SkillID, x.Level }).IsUnique();
 
@@ -37,6 +43,12 @@ namespace MoneyHeist.DataAccess
 
             builder.Entity<Member>()
                 .HasIndex(x => x.Email).IsUnique();
+
+            builder.Entity<Member>()
+                .HasMany(x => x.Skills)
+                .WithOne(x => x.Member)
+                .HasForeignKey(x => x.MemberID)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<MemberToSkill>()
                 .HasIndex(x => new { x.MemberID, x.SkillID }).IsUnique();

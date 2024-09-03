@@ -4,7 +4,7 @@ namespace MoneyHeist.Data.Dtos.Heist
 {
     public class HeistToSkillDto: SkillLevelDto
     {
-        [JsonPropertyName("Members")]
+        [JsonPropertyName("members")]
         public int Members { get; set; }
 
         [JsonIgnore]
