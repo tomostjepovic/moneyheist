@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace MoneyHeist.Data.Dtos.Member
+namespace MoneyHeist.Data.Dtos.Heist
 {
     public class HeistDto
     {

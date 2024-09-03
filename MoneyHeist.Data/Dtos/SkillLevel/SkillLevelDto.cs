@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
-namespace MoneyHeist.Data.Dtos.Member
+namespace MoneyHeist.Data.Dtos.SkillLevel
 {
     public abstract class SkillLevelDto
     {

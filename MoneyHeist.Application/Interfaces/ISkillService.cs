@@ -1,4 +1,5 @@
-﻿using MoneyHeist.Data.Entities;
+﻿using MoneyHeist.Data.Dtos.Member;
+using MoneyHeist.Data.Entities;
 
 namespace MoneyHeist.Application.Interfaces
 {

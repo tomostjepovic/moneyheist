@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
-using MoneyHeist.Data.Dtos.Member;
+using MoneyHeist.Data.Dtos.Heist;
 using MoneyHeist.Data.Entities;
 using MoneyHeist.Data.Models;
 using MoneyHeist.DataAccess;
@@ -17,7 +17,67 @@ namespace MoneyHeist.Application.Services
             repoContext = _repoContext;
             skillService = _skillService;
         }
-        
+
+        public async Task<ServiceResult> UpdateHeistSkills(int heistID, HeistSkillsDto updateHeistSkillsDto)
+        {
+            var errors = new List<string>();
+            var skillsErrors = ValidateHeistSkills(updateHeistSkillsDto.Skills);
+            if (skillsErrors != null)
+            {
+                errors.AddRange(skillsErrors);
+            }
+
+            var heist = repoContext.Heists.SingleOrDefault(x => x.ID == heistID);
+
+            if (heist == null)
+            {
+                // TODO: raise exception?
+                errors.Add("Heist nof found");
+            } else
+            {
+                if (HeistHasStarted(heist))
+                {
+                    errors.Add("Heist already started");
+                }
+            }
+
+            if (errors.Any())
+            {
+                return ServiceResult.ErrorResult("Validation errors", errors);
+            }
+
+            DeleteHeistSkils(heistID);
+
+            foreach (var skillDto in updateHeistSkillsDto.Skills)
+            {
+                await InsertHeistToSkill(heistID, skillDto);
+            }
+
+            return ServiceResult.SuccessResult();
+        }
+
+        public bool HeistHasStarted(Heist heist)
+        {
+            return heist.Start <= DateTime.Now;
+        }
+
+        private void DeleteHeistSkils(int heistID)
+        {
+            var existingSkills = repoContext.HeistToSkills.Where(x => x.HeistID == heistID);
+
+            repoContext.HeistToSkills.RemoveRange(existingSkills);
+        } 
+
+        public async Task<HeistDto> GetHeistById(int id)
+        {
+            var heist = repoContext.Heists.SingleOrDefault(x => x.ID == id);
+            if (heist == null)
+            {
+                return null;
+            }
+            return HeistToHeistDto(heist);
+        }
+
         public async Task<CreateHeistServiceResult> CreateHeist(HeistDto heistDto)
         {
             var errors = await ValidateCreateHeistAsync(heistDto);
@@ -91,11 +151,6 @@ namespace MoneyHeist.Application.Services
                 errors.Add("Heist with same name exists");
             }
 
-            if (heistDto.Skills == null || !heistDto.Skills.Any())
-            {
-                errors.Add("At least one skill is required");
-            }
-
             var skillsErrors = ValidateHeistSkills(heistDto.Skills);
             if (skillsErrors != null)
             {
@@ -110,9 +165,16 @@ namespace MoneyHeist.Application.Services
             return await repoContext.Heists.AnyAsync(x => x.Name == name);
         }
 
-        private List<string> ValidateHeistSkills(List<HeistToSkillDto> heistSkills)
+        private List<string> ValidateHeistSkills(List<HeistToSkillDto>? heistSkills)
         {
             List<string> errors = new List<string>();
+
+            if (heistSkills == null || !heistSkills.Any())
+            {
+                errors.Add("At least one skill is required");
+                return errors;
+            }
+
             var hasDuplicateSkils = HeistSkillsHasDuplicates(heistSkills);
             if (hasDuplicateSkils)
             {
@@ -151,6 +213,20 @@ namespace MoneyHeist.Application.Services
 
             await repoContext.AddAsync(heistToSkill);
             await repoContext.SaveChangesAsync();
-        }        
+        }   
+        
+
+        // mappers
+        private HeistDto HeistToHeistDto(Heist heist)
+        {
+            return new HeistDto
+            {
+                ID = heist.ID,
+                EndTime = heist.End,
+                StartTime = heist.Start,
+                Location = heist.Location,
+                Name = heist.Name
+            };
+        }
     }
 }
