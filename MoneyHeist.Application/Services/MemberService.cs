@@ -3,6 +3,7 @@ using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Application.Mappers;
 using MoneyHeist.Data.Dtos.Member;
 using MoneyHeist.Data.Entities;
+using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.Data.Models;
 using MoneyHeist.DataAccess;
 
@@ -42,7 +43,7 @@ namespace MoneyHeist.Application.Services
 
             if (memberSkill == null)
             {
-                return ServiceResult.ErrorResult("Member or member skill doesnt exist");
+                return ServiceResult.ErrorResult(HeistErrors.MemberOrMemberSkillNotFound);
             }
 
             if (memberSkill != null)
@@ -62,6 +63,12 @@ namespace MoneyHeist.Application.Services
 
         public async Task<ServiceResult> UpdateMemberSkills(int memberID, MemberSkillsDto updateMemberSkillsDto)
         {
+            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == memberID);
+            if (member == null)
+            {
+                return ServiceResult.ErrorResult(HeistErrors.MemberNotFound);
+            }
+
             var errors = await ValidateUpdateMemberSkills(memberID, updateMemberSkillsDto);
             if (errors.Any())
             {
@@ -82,7 +89,6 @@ namespace MoneyHeist.Application.Services
 
             if (!string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill))
             {
-                var member = await repoContext.Members.SingleAsync(x => x.ID == memberID);
                 var mainSkill = await repoContext.Skills.SingleAsync(x => x.Name.ToLower() == updateMemberSkillsDto.MainSkill.ToLower());
                 member.MainSkillID = mainSkill.ID;
 
@@ -95,13 +101,7 @@ namespace MoneyHeist.Application.Services
 
         private async Task<List<string>> ValidateUpdateMemberSkills(int memberID, MemberSkillsDto updateMemberSkillsDto)
         {
-            List<string> errors = new List<string>();
-
-            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == memberID);
-            if (member == null)
-            {
-                errors.Add("Member doesnt exists");
-            }
+            List<string> errors = new List<string>();            
 
             if (string.IsNullOrEmpty(updateMemberSkillsDto.MainSkill) && (updateMemberSkillsDto.Skills == null || !updateMemberSkillsDto.Skills.Any()))
             {

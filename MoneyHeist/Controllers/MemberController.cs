@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Data.Dtos.Member;
+using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.DataAccess;
 
 namespace MoneyHeist.Controllers
@@ -64,16 +64,14 @@ namespace MoneyHeist.Controllers
         [Route("{id}/skills")]
         public async Task<IActionResult> UpdateMemberSkills([FromRoute] int id, [FromBody] MemberSkillsDto updateMemberSkillsDto)
         {
-            var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
-            if (member == null)
-            {
-                return NotFound();
-            }
-
             var result = await memberService.UpdateMemberSkills(id, updateMemberSkillsDto);
 
             if (!result.Success)
             {
+                if (result.ErrorMessage == HeistErrors.MemberNotFound)
+                {
+                    return NotFound();
+                }
                 return BadRequest(result);
             }
 
@@ -87,16 +85,14 @@ namespace MoneyHeist.Controllers
         [Route("{id}/skills/{skillName}")]
         public async Task<IActionResult> DeleteMemberSkills([FromRoute] int id, [FromRoute] string skillName)
         {
-            var skill = await repoContext.MemberToSkills.SingleOrDefaultAsync(x => x.MemberID == id && x.Skill.Name.ToLower() == skillName.ToLower());
-            if (skill == null)
-            {
-                return NotFound();
-            }
-
             var result = await memberService.DeleteMemberSkills(id, skillName);
 
             if (!result.Success)
             {
+                if (result.ErrorMessage != HeistErrors.MemberOrMemberSkillNotFound)
+                {
+                    return NotFound();
+                }
                 return BadRequest(result);
             }
 

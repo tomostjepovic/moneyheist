@@ -87,6 +87,7 @@ namespace MoneyHeist.Controllers
             { });
         }
 
+        // TODO: finish implementations
         [HttpGet]
         [Route("{id}/eligible_members")]
         public async Task<IActionResult> GetEligibleMembers(int id)
@@ -127,22 +128,18 @@ namespace MoneyHeist.Controllers
         [Route("{id}/skills")]
         public async Task<IActionResult> UpdateMemberSkills([FromRoute] int id, [FromBody] HeistSkillsDto updateHeistSkillsDto)
         {
-            var heist = await repoContext.Heists.SingleOrDefaultAsync(x => x.ID == id);
-            if (heist == null)
-            {
-                return NotFound();
-            }
-
-            var heistHasStarted = heistService.HeistHasStarted(heist);
-            if (heistHasStarted)
-            {
-                return StatusCode(StatusCodes.Status405MethodNotAllowed);
-            }
-
             var result = await heistService.UpdateHeistSkills(id, updateHeistSkillsDto);
 
             if (!result.Success)
             {
+                if (result.ErrorMessage == HeistErrors.HeistNotFound)
+                {
+                    return NotFound();
+                }
+                if (result.ErrorMessage == HeistErrors.HeistHasStarted)
+                {
+                    return StatusCode(StatusCodes.Status405MethodNotAllowed);
+                }
                 return BadRequest(result);
             }
 

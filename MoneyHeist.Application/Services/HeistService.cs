@@ -70,13 +70,12 @@ namespace MoneyHeist.Application.Services
 
             if (heist == null)
             {
-                // TODO: raise exception?
-                errors.Add("Heist nof found");
+                return ServiceResult.ErrorResult(HeistErrors.HeistNotFound);
             } else
             {
                 if (HeistHasStarted(heist))
                 {
-                    errors.Add("Heist already started");
+                    return ServiceResult.ErrorResult(HeistErrors.HeistHasStarted);
                 }
             }
 
