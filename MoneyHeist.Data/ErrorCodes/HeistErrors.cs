@@ -10,6 +10,7 @@ namespace MoneyHeist.Data.ErrorCodes
         public static readonly string MemberOrMemberSkillNotFound = "Member or member skill not found";
         public static readonly string HeistNotInPlaning = "Heist status is not Planning";
         public static readonly string MembersAlreadyConfirmed = "Heist members already confirmed";
+        public static readonly string HeistInPlaning = "Heist is in Planning status";
 
     }
 }

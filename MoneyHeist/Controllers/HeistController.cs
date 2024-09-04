@@ -72,33 +72,28 @@ namespace MoneyHeist.Controllers
             return Ok();
         }
 
-        // TODO: implement when status added to heist
         [HttpGet]
         [Route("{id}/status")]
         public async Task<IActionResult> GetHeistStatus(int id)
         {
-            var heist = await heistService.GetHeistById(id);
-            if (heist == null)
+            var heistStatusResult = await heistService.GetHeistStatus(id);
+            if (!heistStatusResult.Success)
             {
-                return NotFound();
+                if (heistStatusResult.ErrorMessage == HeistErrors.HeistNotFound)
+                {
+                    return NotFound();
+                }
+                
+                return BadRequest(heistStatusResult.ErrorMessage);
             }
 
-            return Ok(new
-            { });
+            return Ok(heistStatusResult.StatusDto);
         }
 
-        // TODO: finish implementations
         [HttpGet]
         [Route("{id}/eligible_members")]
         public async Task<IActionResult> GetEligibleMembers(int id)
         {
-            var heist = await heistService.GetHeistById(id);
-            if (heist == null)
-            {
-                return NotFound();
-            }
-
-            var heistSkills = await heistService.GetHeistSkills(id);
             var eligibleMembersResult = await heistService.GetHeistEligibleMembers(id);
 
             if (!eligibleMembersResult.Success)
@@ -116,6 +111,30 @@ namespace MoneyHeist.Controllers
             }
 
             return Ok(eligibleMembersResult.EligibleMembers);
+        }
+
+        [HttpGet]
+        [Route("{id}/members")]
+        public async Task<IActionResult> GetMembers(int id)
+        {
+            
+            var heistMembers = await heistService.GetHeistMembers(id);
+
+            if (!heistMembers.Success)
+            {
+                if (heistMembers.ErrorMessage == HeistErrors.HeistNotFound)
+                {
+                    return NotFound();
+                }
+
+                if (heistMembers.ErrorMessage == HeistErrors.HeistInPlaning)
+                {
+                    return StatusCode(StatusCodes.Status405MethodNotAllowed);
+                }
+                return BadRequest(heistMembers.ErrorMessage);
+            }
+
+            return Ok(heistMembers.Members);
         }
 
         [HttpPost]

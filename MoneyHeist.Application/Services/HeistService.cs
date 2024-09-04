@@ -28,7 +28,7 @@ namespace MoneyHeist.Application.Services
             {
                 return ServiceResult.ErrorResult(HeistErrors.HeistNotFound);
             }
-            var heistStatus = await GetHeistStatus(id);
+            var heistStatus = await GetHeistStatusById(id);
 
             if (heistStatus == null || !heistStatus.IsReady) 
             {
@@ -44,7 +44,24 @@ namespace MoneyHeist.Application.Services
             return ServiceResult.SuccessResult();
         }
 
-        private async Task<HeistStatus> GetHeistStatus(int id)
+        public async Task<HeistStatusServiceResult> GetHeistStatus(int id)
+        {
+            var heist = await repoContext.Heists.SingleOrDefaultAsync(x => x.ID == id);
+            if (heist == null)
+            {
+                return new HeistStatusServiceResult(false, HeistErrors.HeistNotFound);
+            }
+            var heistStatus = await GetHeistStatusById(id);
+            return new HeistStatusServiceResult(true)
+            {
+                StatusDto = new HeistStatusDto
+                {
+                    StatusName = heistStatus.Name
+                }
+            };
+        }
+
+        private async Task<HeistStatus> GetHeistStatusById(int id)
         {
             return await repoContext.Heists.Where(x => x.ID == id).Select(x => x.Status).SingleAsync();
         }
@@ -83,6 +100,47 @@ namespace MoneyHeist.Application.Services
             {
                 EligibleMembers = heistEligibleMembersDto
             };
+        }
+
+        public async Task<HeistMembersServiceResult> GetHeistMembers(int id)
+        {
+            var heist = repoContext.Heists.SingleOrDefault(x => x.ID == id);
+
+            if (heist == null)
+            {
+                return new HeistMembersServiceResult(false, HeistErrors.HeistNotFound);
+            }
+            else
+            {
+                var heistStatus = await GetHeistStatusById(id);
+                if (heistStatus.IsPlanning)
+                {
+                    return new HeistMembersServiceResult(false, HeistErrors.HeistInPlaning);
+                }
+            }
+            var members = await GetHeistMembersDto(id);
+
+            return new HeistMembersServiceResult(true)
+            {
+                Members = members
+            };
+        }
+
+        private async Task<List<MemberDto>> GetHeistMembersDto(int id)
+        {
+            var heistMembers = await repoContext.HeistMembers.Where(x => x.HeistID == id)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.Gender)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.Status)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.MainSkill)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.Skills)
+                .ThenInclude(x => x.Skill)
+                .Select(x => x.Member).ToListAsync();
+
+            return heistMembers.Select(x => x.ToDto()).ToList();
         }
 
         private async Task<List<MemberDto>> GetHeistEligibleMembersDto(int id)
@@ -353,14 +411,14 @@ namespace MoneyHeist.Application.Services
             }
             else
             {
-                var heistStatus = await GetHeistStatus(id);
+                var heistStatus = await GetHeistStatusById(id);
                 if (!heistStatus.IsPlanning)
                 {
                     return ServiceResult.ErrorResult(HeistErrors.HeistNotInPlaning);
                 }
             }
 
-            return null;
+            return ServiceResult.SuccessResult();
         }
 
         public void EligibleMembersForHeist(int id)
