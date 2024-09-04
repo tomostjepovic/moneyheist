@@ -2,11 +2,11 @@
 using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Application.Mappers;
 using MoneyHeist.Data.Dtos.Heist;
+using MoneyHeist.Data.Dtos.Member;
 using MoneyHeist.Data.Entities;
 using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.Data.Models;
 using MoneyHeist.DataAccess;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MoneyHeist.Application.Services
 {
@@ -28,8 +28,7 @@ namespace MoneyHeist.Application.Services
             {
                 return ServiceResult.ErrorResult(HeistErrors.HeistNotFound);
             }
-
-            var heistStatus = await repoContext.Heists.Where(x => x.ID == id).Select(x => x.Status).SingleOrDefaultAsync();
+            var heistStatus = await GetHeistStatus(id);
 
             if (heistStatus == null || !heistStatus.IsReady) 
             {
@@ -45,16 +44,62 @@ namespace MoneyHeist.Application.Services
             return ServiceResult.SuccessResult();
         }
 
+        private async Task<HeistStatus> GetHeistStatus(int id)
+        {
+            return await repoContext.Heists.Where(x => x.ID == id).Select(x => x.Status).SingleAsync();
+        }
+
         public async Task<List<HeistToSkillDto>> GetHeistSkills(int id)
         {
             var heistSkills = await repoContext.HeistToSkills.Include(x => x.Skill).Where(x => x.HeistID == id).ToListAsync();
             return heistSkills.Select(x => x.ToDto()).ToList();
         }
 
-
-        public async Task<List<HeistToSkillDto>> GetHeistEligibleMembers(int id)
+        public async Task<HeistEligibleMembersServiceResult> GetHeistEligibleMembers(int id)
         {
-            return null;
+            var heist = await repoContext.Heists.SingleOrDefaultAsync(x => x.ID == id);
+            if (heist == null)
+            {
+                return new HeistEligibleMembersServiceResult(false, HeistErrors.HeistNotFound);
+            }
+
+            var heistHasConfirmedMembers = await repoContext.HeistMembers.AnyAsync(x => x.HeistID == id);
+
+            if (heistHasConfirmedMembers)
+            {
+                return new HeistEligibleMembersServiceResult(false, HeistErrors.MembersAlreadyConfirmed);
+            }
+
+            var heistSkills = await GetHeistSkills(id);
+            var eligibleMembers = await GetHeistEligibleMembersDto(id);
+
+            var heistEligibleMembersDto = new HeistEligibleMembersDto
+            {
+                Skills = heistSkills,
+                Members = eligibleMembers
+            };
+
+            return new HeistEligibleMembersServiceResult(true)
+            {
+                EligibleMembers = heistEligibleMembersDto
+            };
+        }
+
+        private async Task<List<MemberDto>> GetHeistEligibleMembersDto(int id)
+        {
+            var eligibleMembers = await repoContext.HeistEligibleMemberBrowse.Where(x => x.HeistID == id)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.Gender)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.Status)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.MainSkill)
+                .Include(x => x.Member)
+                .ThenInclude(x => x.Skills)
+                .ThenInclude(x => x.Skill)
+                .Select(x => x.Member).ToListAsync();
+
+            return eligibleMembers.Select(x => x.ToDto()).ToList();
         }
 
         public async Task<ServiceResult> UpdateHeistSkills(int heistID, HeistSkillsDto updateHeistSkillsDto)
@@ -96,7 +141,7 @@ namespace MoneyHeist.Application.Services
 
         public bool HeistHasStarted(Heist heist)
         {
-            return heist.Start <= DateTime.Now;
+            return heist.StartTime <= DateTime.Now;
         }
 
         private void DeleteHeistSkils(int heistID)
@@ -134,8 +179,8 @@ namespace MoneyHeist.Application.Services
 
             var heist = new Heist();
             heist.Name = heistDto.Name;
-            heist.Start = heistDto.StartTime.Value;
-            heist.End = heistDto.EndTime.Value;
+            heist.StartTime = heistDto.StartTime.Value;
+            heist.EndTime = heistDto.EndTime.Value;
             heist.Location = heistDto.Location;
             heist.StatusID = initialStatus.ID;
 
@@ -267,7 +312,7 @@ namespace MoneyHeist.Application.Services
             var inProgressStatus = await repoContext.HeistStatuses.SingleAsync(x => x.IsInProgress);
             var now = DateTime.Now.ToUniversalTime();
             var heistThatShouldBeStarted = await repoContext.Heists
-                .Where(x => x.Status.IsPlanning && x.Start <= now && x.End > now).ToListAsync();
+                .Where(x => x.Status.IsPlanning && x.StartTime <= now && x.EndTime > now).ToListAsync();
             if (heistThatShouldBeStarted.Any())
             {
                 foreach (var heist in heistThatShouldBeStarted)
@@ -285,7 +330,7 @@ namespace MoneyHeist.Application.Services
             var finishedStatus = await repoContext.HeistStatuses.SingleAsync(x => x.IsFinished);
             var now = DateTime.Now.ToUniversalTime();
             var heistThatShouldBeFinished = await repoContext.Heists
-                .Where(x => x.Status.IsInProgress && x.End < now).ToListAsync();
+                .Where(x => x.Status.IsInProgress && x.EndTime < now).ToListAsync();
             if (heistThatShouldBeFinished.Any())
             {
                 foreach (var heist in heistThatShouldBeFinished)
@@ -296,6 +341,31 @@ namespace MoneyHeist.Application.Services
                 repoContext.UpdateRange(heistThatShouldBeFinished);
                 await repoContext.SaveChangesAsync();
             }
+        }
+
+        public async Task<ServiceResult> AssignMembersToHeist(int id, AssignMembersToHeistDto assignMembersToHeistDto)
+        {
+            var heist = repoContext.Heists.SingleOrDefault(x => x.ID == id);
+
+            if (heist == null)
+            {
+                return ServiceResult.ErrorResult(HeistErrors.HeistNotFound);
+            }
+            else
+            {
+                var heistStatus = await GetHeistStatus(id);
+                if (!heistStatus.IsPlanning)
+                {
+                    return ServiceResult.ErrorResult(HeistErrors.HeistNotInPlaning);
+                }
+            }
+
+            return null;
+        }
+
+        public void EligibleMembersForHeist(int id)
+        {
+            // get members that 
         }
     }
 }

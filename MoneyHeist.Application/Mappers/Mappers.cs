@@ -13,8 +13,8 @@ namespace MoneyHeist.Application.Mappers
             {
                 ID = entity.ID,
                 Name = entity.Name,
-                StartTime = entity.Start,
-                EndTime = entity.End,
+                StartTime = entity.StartTime,
+                EndTime = entity.EndTime,
                 Location = entity.Location,
                 Status = entity.Status.Name,
                 Skills = entity.Skills.Select(x => x.ToDto()).ToList()
@@ -38,9 +38,9 @@ namespace MoneyHeist.Application.Mappers
                 Name = entity.Name,
                 Email = entity.Email,
                 MainSkill = entity.MainSkill?.Name,
-                Sex = entity.Gender.Name,
-                Status = entity.Status.Name,
-                Skills = entity.Skills.Select(x => x.ToDto()).ToList()
+                Sex = entity.Gender?.Name,
+                Status = entity.Status?.Name,
+                Skills = entity.Skills?.Select(x => x.ToDto()).ToList()
             };
 
             return memberDto;

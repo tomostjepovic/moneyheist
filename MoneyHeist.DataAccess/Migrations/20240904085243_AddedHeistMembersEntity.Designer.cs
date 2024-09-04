@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyHeist.DataAccess;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MoneyHeist.DataAccess.Migrations
 {
     [DbContext(typeof(RepoContext))]
-    partial class RepoContextModelSnapshot : ModelSnapshot
+    [Migration("20240904085243_AddedHeistMembersEntity")]
+    partial class AddedHeistMembersEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,9 +58,9 @@ namespace MoneyHeist.DataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ID"));
 
-                    b.Property<DateTime>("EndTime")
+                    b.Property<DateTime>("End")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("end_time");
+                        .HasColumnName("end");
 
                     b.Property<string>("Location")
                         .IsRequired()
@@ -69,9 +72,9 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<DateTime>("StartTime")
+                    b.Property<DateTime>("Start")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_time");
+                        .HasColumnName("start");
 
                     b.Property<int>("StatusID")
                         .HasColumnType("integer")
@@ -88,27 +91,6 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasDatabaseName("ix_heists_status_id");
 
                     b.ToTable("heists", (string)null);
-                });
-
-            modelBuilder.Entity("MoneyHeist.Data.Entities.HeistEligibleMemberBrowse", b =>
-                {
-                    b.Property<int>("HeistID")
-                        .HasColumnType("integer")
-                        .HasColumnName("heist_id");
-
-                    b.Property<int>("MemberID")
-                        .HasColumnType("integer")
-                        .HasColumnName("member_id");
-
-                    b.HasIndex("HeistID")
-                        .HasDatabaseName("ix_heist_eligible_member_browse_heist_id");
-
-                    b.HasIndex("MemberID")
-                        .HasDatabaseName("ix_heist_eligible_member_browse_member_id");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("vw_heist_eligible_member_browse", (string)null);
                 });
 
             modelBuilder.Entity("MoneyHeist.Data.Entities.HeistMember", b =>
@@ -361,27 +343,6 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasConstraintName("fk_heists_heist_statuses_status_id");
 
                     b.Navigation("Status");
-                });
-
-            modelBuilder.Entity("MoneyHeist.Data.Entities.HeistEligibleMemberBrowse", b =>
-                {
-                    b.HasOne("MoneyHeist.Data.Entities.Heist", "Heist")
-                        .WithMany()
-                        .HasForeignKey("HeistID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_heist_eligible_member_browse_heists_heist_id");
-
-                    b.HasOne("MoneyHeist.Data.Entities.Member", "Member")
-                        .WithMany()
-                        .HasForeignKey("MemberID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_heist_eligible_member_browse_members_member_id");
-
-                    b.Navigation("Heist");
-
-                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("MoneyHeist.Data.Entities.HeistMember", b =>

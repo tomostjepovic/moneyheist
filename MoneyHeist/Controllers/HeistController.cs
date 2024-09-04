@@ -99,14 +99,23 @@ namespace MoneyHeist.Controllers
             }
 
             var heistSkills = await heistService.GetHeistSkills(id);
+            var eligibleMembersResult = await heistService.GetHeistEligibleMembers(id);
 
-            var result = new HeistEligibleMembersDto
+            if (!eligibleMembersResult.Success)
             {
-                Skills = heistSkills,
-            };
-            //var member = await repoContext.Members.SingleOrDefaultAsync(x => x.ID == id);
+                if (eligibleMembersResult.ErrorMessage == HeistErrors.HeistNotFound)
+                {
+                    return NotFound();
+                }
 
-            return Ok(result);
+                if (eligibleMembersResult.ErrorMessage == HeistErrors.MembersAlreadyConfirmed)
+                {
+                    return StatusCode(StatusCodes.Status405MethodNotAllowed);
+                }
+                return BadRequest(eligibleMembersResult.ErrorMessage);
+            }
+
+            return Ok(eligibleMembersResult.EligibleMembers);
         }
 
         [HttpPost]
@@ -146,6 +155,32 @@ namespace MoneyHeist.Controllers
             // TODO: set URI correctly
             Response.Headers["Location"] = $"/heist/{id}/skills";
 
+            return NoContent();
+        }
+
+        [HttpPut]
+        [Route("{id}/members")]
+        public async Task<IActionResult> AssignMembersToHeist([FromRoute] int id, [FromBody] AssignMembersToHeistDto assignMembersToHeistDto)
+        {
+            /*
+            var result = await heistService.UpdateHeistSkills(id, updateHeistSkillsDto);
+
+            if (!result.Success)
+            {
+                if (result.ErrorMessage == HeistErrors.HeistNotFound)
+                {
+                    return NotFound();
+                }
+                if (result.ErrorMessage == HeistErrors.HeistNotInPlaning)
+                {
+                    return StatusCode(StatusCodes.Status405MethodNotAllowed);
+                }
+                return BadRequest(result);
+            }
+
+            // TODO: set URI correctly
+            Response.Headers["Location"] = $"/heist/{id}/members";
+            */
             return NoContent();
         }
     }

@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using MoneyHeist.Data.Dtos.Member;
+using System.Text.Json.Serialization;
 
 namespace MoneyHeist.Data.Dtos.Heist
 {
@@ -6,5 +7,7 @@ namespace MoneyHeist.Data.Dtos.Heist
     {
         [JsonPropertyName("skills")]
         public List<HeistToSkillDto> Skills { get; set; }
+        [JsonPropertyName("members")]
+        public List<MemberDto> Members { get; set; }
     }
 }

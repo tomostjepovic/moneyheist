@@ -16,12 +16,21 @@ namespace MoneyHeist.DataAccess
         public DbSet<Heist> Heists { get; set; }
         public DbSet<HeistToSkill> HeistToSkills { get; set; }
         public DbSet<HeistStatus> HeistStatuses { get; set; }
+        public DbSet<HeistMember> HeistMembers { get; set; }
+        public DbSet<HeistEligibleMemberBrowse> HeistEligibleMemberBrowse { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // TODO: define on cascade delete restrict for needed entities
 
             base.OnModelCreating(builder);
+
+            builder
+                .Entity<HeistEligibleMemberBrowse>(eb =>
+                {
+                    eb.HasKey(x => new { x.HeistID, x.MemberID });
+                    eb.ToView("vw_heist_eligible_member_browse");
+                });
 
             builder.Entity<Heist>()
                 .HasIndex(x => x.Name).IsUnique();
@@ -34,6 +43,9 @@ namespace MoneyHeist.DataAccess
 
             builder.Entity<HeistToSkill>()
                 .HasIndex(x => new { x.HeistID, x.SkillID, x.Level }).IsUnique();
+
+            builder.Entity<HeistMember>()
+                .HasIndex(x => new { x.HeistID, x.MemberID }).IsUnique();
 
             builder.Entity<Gender>()
                 .HasIndex(x => x.Name).IsUnique();
