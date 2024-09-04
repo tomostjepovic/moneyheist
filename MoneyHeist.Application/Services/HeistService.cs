@@ -260,5 +260,42 @@ namespace MoneyHeist.Application.Services
             await repoContext.AddAsync(heistToSkill);
             await repoContext.SaveChangesAsync();
         }
+
+
+        public async Task StartHeists()
+        {
+            var inProgressStatus = await repoContext.HeistStatuses.SingleAsync(x => x.IsInProgress);
+            var now = DateTime.Now.ToUniversalTime();
+            var heistThatShouldBeStarted = await repoContext.Heists
+                .Where(x => x.Status.IsPlanning && x.Start <= now && x.End > now).ToListAsync();
+            if (heistThatShouldBeStarted.Any())
+            {
+                foreach (var heist in heistThatShouldBeStarted)
+                {
+                    heist.StatusID = inProgressStatus.ID;
+                };
+
+                repoContext.UpdateRange(heistThatShouldBeStarted);
+                await repoContext.SaveChangesAsync();
+            }
+        }
+
+        public async Task FinishHeists()
+        {
+            var finishedStatus = await repoContext.HeistStatuses.SingleAsync(x => x.IsFinished);
+            var now = DateTime.Now.ToUniversalTime();
+            var heistThatShouldBeFinished = await repoContext.Heists
+                .Where(x => x.Status.IsInProgress && x.End < now).ToListAsync();
+            if (heistThatShouldBeFinished.Any())
+            {
+                foreach (var heist in heistThatShouldBeFinished)
+                {
+                    heist.StatusID = finishedStatus.ID;
+                };
+
+                repoContext.UpdateRange(heistThatShouldBeFinished);
+                await repoContext.SaveChangesAsync();
+            }
+        }
     }
 }

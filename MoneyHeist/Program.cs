@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
+using MoneyHeist.Application.Schedulers;
 using MoneyHeist.Application.Services;
 using MoneyHeist.DataAccess;
 
@@ -16,6 +17,9 @@ namespace MoneyHeist
             builder.Services.AddScoped<ISkillService, SkillService>();
             builder.Services.AddScoped<IMemberService, MemberService>();
             builder.Services.AddScoped<IHeistService, HeistService>();
+
+            // Register the hosted service
+            builder.Services.AddHostedService<HeistStartAndFinishTaskService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
