@@ -7,6 +7,7 @@ using MoneyHeist.Data.Entities;
 using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.Data.Models;
 using MoneyHeist.DataAccess;
+using System.Xml.Serialization;
 
 namespace MoneyHeist.Application.Services
 {
@@ -417,6 +418,46 @@ namespace MoneyHeist.Application.Services
                     return ServiceResult.ErrorResult(HeistErrors.HeistNotInPlaning);
                 }
             }
+
+            var heistMembers = new List<HeistMember>();
+            var heistEligibleMembers = await repoContext.HeistEligibleMemberBrowse.Where(x => x.HeistID == id).Select(x => x.Member).ToListAsync();
+            if (!heistEligibleMembers.Any())
+            {
+                return ServiceResult.ErrorResult(HeistErrors.HeistDoesntHaveEligibleMembers);
+            }
+
+            var distinctMembers = assignMembersToHeistDto.Members.Distinct().ToList();
+
+            foreach (var memberName in distinctMembers)
+            {
+                var membersToAssign = heistEligibleMembers.Where(x => x.Name == memberName).ToList();
+                if(!membersToAssign.Any())
+                {
+                    return ServiceResult.ErrorResult($"{HeistErrors.MemberIsNotEligibleForThisHeist}: {memberName}");
+                }
+                foreach (var member in membersToAssign)
+                {
+                    heistMembers.Add(new HeistMember
+                    {
+                        HeistID = id,
+                        MemberID = member.ID
+                    });
+                }
+            }
+            
+            var currentHeistMembers = repoContext.HeistMembers.Where(x => x.HeistID == id);
+            if (currentHeistMembers.Any())
+            {
+                repoContext.RemoveRange(currentHeistMembers);
+                await repoContext.SaveChangesAsync();
+            }
+
+            var readyStatus = await repoContext.HeistStatuses.SingleAsync(x => x.IsReady);
+
+            await repoContext.AddRangeAsync(heistMembers);
+            heist.StatusID = readyStatus.ID;
+            repoContext.Update(heist);
+            await repoContext.SaveChangesAsync();
 
             return ServiceResult.SuccessResult();
         }

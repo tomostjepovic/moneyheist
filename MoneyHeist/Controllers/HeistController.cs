@@ -181,8 +181,8 @@ namespace MoneyHeist.Controllers
         [Route("{id}/members")]
         public async Task<IActionResult> AssignMembersToHeist([FromRoute] int id, [FromBody] AssignMembersToHeistDto assignMembersToHeistDto)
         {
-            /*
-            var result = await heistService.UpdateHeistSkills(id, updateHeistSkillsDto);
+            
+            var result = await heistService.AssignMembersToHeist(id, assignMembersToHeistDto);
 
             if (!result.Success)
             {
@@ -199,7 +199,7 @@ namespace MoneyHeist.Controllers
 
             // TODO: set URI correctly
             Response.Headers["Location"] = $"/heist/{id}/members";
-            */
+            
             return NoContent();
         }
     }
