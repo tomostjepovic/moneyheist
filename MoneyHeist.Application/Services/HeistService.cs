@@ -15,6 +15,9 @@ namespace MoneyHeist.Application.Services
     {
         private readonly RepoContext repoContext;
         private readonly ISkillService skillService;
+        private const string HEIST_STATUS_FAILED = "FAILED";
+        private const string HEIST_STATUS_SUCCEEDED = "SUCCEEDED"; 
+        private static Random randomGenerator = new Random();
 
         public HeistService(RepoContext _repoContext, ISkillService _skillService)
         {
@@ -462,9 +465,120 @@ namespace MoneyHeist.Application.Services
             return ServiceResult.SuccessResult();
         }
 
-        public void EligibleMembersForHeist(int id)
+
+        public async Task<HeistOutcomeServiceResult> GetHeistOutcome(int id)
         {
-            // get members that 
+            using var transaction = await repoContext.Database.BeginTransactionAsync();
+            var heist = repoContext.Heists.SingleOrDefault(x => x.ID == id);
+            try
+            {
+
+                if (heist == null)
+                {
+                    return new HeistOutcomeServiceResult(false, HeistErrors.HeistNotFound);
+                }
+                else
+                {
+                    var heistStatus = await GetHeistStatusById(id);
+                    if (!heistStatus.IsFinished)
+                    {
+                        return new HeistOutcomeServiceResult(false, HeistErrors.HeistNotFinished);
+                    }
+                }
+
+                var heistAssignedMembersRate = await repoContext.HeistAssignedMembersRateBrowse.SingleOrDefaultAsync(x => x.HeistID == id);
+                if (heistAssignedMembersRate == null)
+                {
+                    return new HeistOutcomeServiceResult(false, HeistErrors.HeistDoesntHaveAnySkill);
+                }
+
+                string heistOutcome = string.Empty;
+
+                var expiredStatus = await repoContext.MemberStatuses.SingleAsync(x => x.IsExpired);
+                var incarceratedStatus = await repoContext.MemberStatuses.SingleAsync(x => x.IsIncarcerated);
+
+                if (heistAssignedMembersRate.AssignRate < 50)
+                {
+                    heistOutcome = HEIST_STATUS_FAILED;
+                    await SetHeistMembersStatus(id, 1, incarceratedStatus, expiredStatus);
+                } else if (heistAssignedMembersRate.AssignRate < 75)
+                {
+                    var isFailed = RandomTrueOrFalse();
+                    if (isFailed)
+                    {
+                        heistOutcome = HEIST_STATUS_FAILED;
+                        await SetHeistMembersStatus(id, 0.66, incarceratedStatus, expiredStatus);
+                    } else
+                    {
+                        heistOutcome = HEIST_STATUS_SUCCEEDED;
+                        await SetHeistMembersStatus(id, 0.33, incarceratedStatus, expiredStatus);
+                    }
+                }
+                else if (heistAssignedMembersRate.AssignRate < 100)
+                {
+                    heistOutcome = HEIST_STATUS_SUCCEEDED;
+                    await SetHeistMembersStatus(id, 0.66, incarceratedStatus);
+                }
+                else 
+                {
+                    heistOutcome = HEIST_STATUS_SUCCEEDED;
+                }
+
+                await transaction.CommitAsync();
+
+                return new HeistOutcomeServiceResult(true)
+                {
+                    HeistOutcome = new HeistOutcomeDto
+                    {
+                        Outcome = heistOutcome
+                    }
+                };
+            }
+            catch(Exception ex)
+            {
+                transaction.Rollback();
+                return new HeistOutcomeServiceResult(false)
+                {
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        private bool RandomTrueOrFalse()
+        {
+            return randomGenerator.Next(2) == 1;
+        }
+
+        private async Task SetHeistMembersStatus(int heistID, double percentage, MemberStatus status1, MemberStatus? status2 = null)
+        {    
+            var numberOfHeistMembers = await repoContext.HeistMembers.Where(x => x.HeistID == heistID).CountAsync();
+            if (numberOfHeistMembers == 0)
+            {
+                throw new Exception(HeistErrors.HeistDoesntHaveAnyMember);
+            }
+
+            int targetCount = (int)Math.Floor(numberOfHeistMembers * percentage);
+
+            // should members be selected random?
+            var heistMembers = await repoContext.HeistMembers.Where(x => x.HeistID == heistID).Select(x => x.Member).Take(targetCount).ToListAsync();
+            if (heistMembers.Any())
+            {
+                foreach (var heistMember in heistMembers)
+                {
+                    var status = status1;
+                    if (status2 != null)
+                    {
+                        var randomIsExpired = RandomTrueOrFalse();
+                        status = randomIsExpired ? status1 : status2;
+                    }
+
+                    heistMember.StatusID = status.ID;
+                }
+
+                repoContext.UpdateRange(heistMembers);
+
+                await repoContext.SaveChangesAsync();
+            }
         }
     }
 }

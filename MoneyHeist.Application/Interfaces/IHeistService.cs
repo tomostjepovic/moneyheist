@@ -12,6 +12,7 @@ namespace MoneyHeist.Application.Interfaces
         public Task<ServiceResult> AssignMembersToHeist(int heistID, AssignMembersToHeistDto assignMembersToHeistDto);
         public bool HeistHasStarted(Heist heist);
         public Task<List<HeistToSkillDto>> GetHeistSkills(int id);
+        public Task<HeistOutcomeServiceResult> GetHeistOutcome(int id);
         public Task<HeistEligibleMembersServiceResult> GetHeistEligibleMembers(int id);
         public Task<ServiceResult> StartHeist(int id);
         public Task<HeistMembersServiceResult> GetHeistMembers(int id);

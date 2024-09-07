@@ -177,6 +177,32 @@ namespace MoneyHeist.Controllers
             return NoContent();
         }
 
+        [HttpGet]
+        [Route("{id}/outcome")]
+        public async Task<IActionResult> GetOutcome([FromRoute] int id)
+        {
+            var result = await heistService.GetHeistOutcome(id);
+
+            if (!result.Success)
+            {
+                if (result.ErrorMessage == HeistErrors.HeistNotFound)
+                {
+                    return NotFound();
+                }
+                if (result.ErrorMessage == HeistErrors.HeistNotFinished)
+                {
+                    return StatusCode(StatusCodes.Status405MethodNotAllowed);
+                }
+
+                return BadRequest(result);
+            }
+
+            // TODO: set URI correctly
+            Response.Headers["Location"] = $"/heist/{id}/skills";
+
+            return Ok(result.HeistOutcome);
+        }
+
         [HttpPut]
         [Route("{id}/members")]
         public async Task<IActionResult> AssignMembersToHeist([FromRoute] int id, [FromBody] AssignMembersToHeistDto assignMembersToHeistDto)

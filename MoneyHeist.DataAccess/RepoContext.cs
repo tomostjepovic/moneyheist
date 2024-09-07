@@ -18,6 +18,7 @@ namespace MoneyHeist.DataAccess
         public DbSet<HeistStatus> HeistStatuses { get; set; }
         public DbSet<HeistMember> HeistMembers { get; set; }
         public DbSet<HeistEligibleMemberBrowse> HeistEligibleMemberBrowse { get; set; }
+        public DbSet<HeistAssignedMembersRateBrowse> HeistAssignedMembersRateBrowse { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -30,6 +31,13 @@ namespace MoneyHeist.DataAccess
                 {
                     eb.HasKey(x => new { x.HeistID, x.MemberID });
                     eb.ToView("vw_heist_eligible_member_browse");
+                });
+
+            builder
+                .Entity<HeistAssignedMembersRateBrowse>(eb =>
+                {
+                    eb.HasKey(x => new { x.HeistID });
+                    eb.ToView("vw_heist_assign_members_rate_browse");
                 });
 
             builder.Entity<Heist>()

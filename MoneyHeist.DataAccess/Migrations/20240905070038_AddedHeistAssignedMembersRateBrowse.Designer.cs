@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyHeist.DataAccess;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MoneyHeist.DataAccess.Migrations
 {
     [DbContext(typeof(RepoContext))]
-    partial class RepoContextModelSnapshot : ModelSnapshot
+    [Migration("20240905070038_AddedHeistAssignedMembersRateBrowse")]
+    partial class AddedHeistAssignedMembersRateBrowse
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,24 +91,6 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasDatabaseName("ix_heists_status_id");
 
                     b.ToTable("heists", (string)null);
-                });
-
-            modelBuilder.Entity("MoneyHeist.Data.Entities.HeistAssignedMembersRateBrowse", b =>
-                {
-                    b.Property<int>("HeistID")
-                        .HasColumnType("integer")
-                        .HasColumnName("heist_id");
-
-                    b.Property<int>("AssignRate")
-                        .HasColumnType("integer")
-                        .HasColumnName("assign_rate");
-
-                    b.HasKey("HeistID")
-                        .HasName("pk_heist_assigned_members_rate_browse");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("vw_heist_assign_members_rate_browse", (string)null);
                 });
 
             modelBuilder.Entity("MoneyHeist.Data.Entities.HeistEligibleMemberBrowse", b =>
@@ -296,14 +281,6 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("can_participate_in_heist");
 
-                    b.Property<bool>("IsExpired")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_expired");
-
-                    b.Property<bool>("IsIncarcerated")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_incarcerated");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
@@ -387,18 +364,6 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasConstraintName("fk_heists_heist_statuses_status_id");
 
                     b.Navigation("Status");
-                });
-
-            modelBuilder.Entity("MoneyHeist.Data.Entities.HeistAssignedMembersRateBrowse", b =>
-                {
-                    b.HasOne("MoneyHeist.Data.Entities.Heist", "Heist")
-                        .WithMany()
-                        .HasForeignKey("HeistID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_heist_assigned_members_rate_browse_heists_heist_id");
-
-                    b.Navigation("Heist");
                 });
 
             modelBuilder.Entity("MoneyHeist.Data.Entities.HeistEligibleMemberBrowse", b =>
