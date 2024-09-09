@@ -24,8 +24,6 @@ namespace MoneyHeist.DataAccess
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // TODO: define on cascade delete restrict for needed entities
-
             base.OnModelCreating(builder);
 
             builder

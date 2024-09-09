@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
-using MoneyHeist.Application.Services;
 using MoneyHeist.Data.Dtos.Heist;
 using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.DataAccess;
@@ -148,7 +146,6 @@ namespace MoneyHeist.Controllers
                 return BadRequest(result);
             }
 
-            // TODO: set URI correctly
             return Created($"/heist/{result.HeistID}", null);
         }
 
@@ -171,7 +168,6 @@ namespace MoneyHeist.Controllers
                 return BadRequest(result);
             }
 
-            // TODO: set URI correctly
             Response.Headers["Location"] = $"/heist/{id}/skills";
 
             return NoContent();
@@ -197,7 +193,6 @@ namespace MoneyHeist.Controllers
                 return BadRequest(result);
             }
 
-            // TODO: set URI correctly
             Response.Headers["Location"] = $"/heist/{id}/skills";
 
             return Ok(result.HeistOutcome);
@@ -223,7 +218,6 @@ namespace MoneyHeist.Controllers
                 return BadRequest(result);
             }
 
-            // TODO: set URI correctly
             Response.Headers["Location"] = $"/heist/{id}/members";
             
             return NoContent();
