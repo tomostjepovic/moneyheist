@@ -16,5 +16,6 @@ namespace MoneyHeist.Data.ErrorCodes
         public static readonly string HeistInPlaning = "Heist is in Planning status";
         public static readonly string HeistDoesntHaveEligibleMembers = "Heist doesnt have eligible members";
         public static readonly string MemberIsNotEligibleForThisHeist = "Member is not eligible for this heist";
+        public static readonly string NoLevelUpTimeSettings = "Settings for level up not provided";
     }
 }

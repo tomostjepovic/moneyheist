@@ -1,13 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Application.Mappers;
+using MoneyHeist.Data.AppSettings;
 using MoneyHeist.Data.Dtos.Heist;
 using MoneyHeist.Data.Dtos.Member;
 using MoneyHeist.Data.Entities;
 using MoneyHeist.Data.ErrorCodes;
 using MoneyHeist.Data.Models;
 using MoneyHeist.DataAccess;
-using System.Xml.Serialization;
 
 namespace MoneyHeist.Application.Services
 {
@@ -15,14 +16,64 @@ namespace MoneyHeist.Application.Services
     {
         private readonly RepoContext repoContext;
         private readonly ISkillService skillService;
+        private readonly HeistSettings heistSettings;
         private const string HEIST_STATUS_FAILED = "FAILED";
         private const string HEIST_STATUS_SUCCEEDED = "SUCCEEDED"; 
         private static Random randomGenerator = new Random();
 
-        public HeistService(RepoContext _repoContext, ISkillService _skillService)
+        public HeistService(RepoContext _repoContext, ISkillService _skillService, IOptions<HeistSettings> _heistSettings)
         {
             repoContext = _repoContext;
             skillService = _skillService;
+            heistSettings = _heistSettings.Value;
+        }
+
+        public async Task<ServiceResult> HeistMembersLevelUp()
+        {
+            if (heistSettings == null || heistSettings.LevelUpTime == 0)
+            {
+                return new ServiceResult(false, HeistErrors.NoLevelUpTimeSettings);
+            }
+
+            var heistsForLevelUp = await GetHeistsForLevelUp();
+            if (!heistsForLevelUp.Any())
+            {
+                return new ServiceResult(true);
+            }
+
+            foreach (var heist in heistsForLevelUp)
+            {
+                await HeistMembersLevelUp(heist);
+            }
+
+            return new ServiceResult(false, HeistErrors.NoLevelUpTimeSettings);
+        }
+
+        private async Task<List<Heist>> GetHeistsForLevelUp()
+        {
+            return await repoContext.Heists.Where(x => x.Status.IsFinished && !x.MemberLevelUpProcessed).ToListAsync();
+        }
+
+        private async Task HeistMembersLevelUp(Heist heist)
+        {
+            var diffInSeconds = (heist.EndTime - heist.StartTime).TotalSeconds;
+            var levelUp = (int)Math.Floor(diffInSeconds / heistSettings.LevelUpTime);
+
+            var memberSkills = await repoContext.HeistSkillMemberBrowse
+                .Where(x => x.HeistID == heist.ID).Select(x => x.MemberSkill).ToListAsync();
+            foreach (var memberSkill in memberSkills)
+            {
+                memberSkill.Level += levelUp;
+                if (memberSkill.Level > 10)
+                {
+                    memberSkill.Level = 10;
+                }
+            }
+
+            repoContext.UpdateRange(memberSkills);
+            heist.MemberLevelUpProcessed = true;
+            repoContext.UpdateRange(heist);
+            await repoContext.SaveChangesAsync();
         }
 
         public async Task<ServiceResult> StartHeist(int id)

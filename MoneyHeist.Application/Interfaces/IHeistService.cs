@@ -19,5 +19,6 @@ namespace MoneyHeist.Application.Interfaces
         public Task<HeistStatusServiceResult> GetHeistStatus(int id);
         public Task StartHeists();
         public Task FinishHeists();
+        public Task<ServiceResult> HeistMembersLevelUp();
     }
 }

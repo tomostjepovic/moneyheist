@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyHeist.DataAccess;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MoneyHeist.DataAccess.Migrations
 {
     [DbContext(typeof(RepoContext))]
-    partial class RepoContextModelSnapshot : ModelSnapshot
+    [Migration("20240909070141_AddFlagIfLevelUpProcessedOnHeist")]
+    partial class AddFlagIfLevelUpProcessedOnHeist
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,38 +164,6 @@ namespace MoneyHeist.DataAccess.Migrations
                         .HasDatabaseName("ix_heist_members_heist_id_member_id");
 
                     b.ToTable("heist_members", (string)null);
-                });
-
-            modelBuilder.Entity("MoneyHeist.Data.Entities.HeistSkillMemberBrowse", b =>
-                {
-                    b.Property<int>("HeistID")
-                        .HasColumnType("integer")
-                        .HasColumnName("heist_id");
-
-                    b.Property<int>("MemberID")
-                        .HasColumnType("integer")
-                        .HasColumnName("member_id");
-
-                    b.Property<int>("SkillID")
-                        .HasColumnType("integer")
-                        .HasColumnName("skill_id");
-
-                    b.Property<int>("MemberSkillLevel")
-                        .HasColumnType("integer")
-                        .HasColumnName("member_skill_level");
-
-                    b.HasKey("HeistID", "MemberID", "SkillID")
-                        .HasName("pk_heist_skill_member_browse");
-
-                    b.HasIndex("MemberID")
-                        .HasDatabaseName("ix_heist_skill_member_browse_member_id");
-
-                    b.HasIndex("SkillID")
-                        .HasDatabaseName("ix_heist_skill_member_browse_skill_id");
-
-                    b.ToTable((string)null);
-
-                    b.ToView("vw_heist_skill_member_browse", (string)null);
                 });
 
             modelBuilder.Entity("MoneyHeist.Data.Entities.HeistStatus", b =>
@@ -485,36 +456,6 @@ namespace MoneyHeist.DataAccess.Migrations
                     b.Navigation("Heist");
 
                     b.Navigation("Member");
-                });
-
-            modelBuilder.Entity("MoneyHeist.Data.Entities.HeistSkillMemberBrowse", b =>
-                {
-                    b.HasOne("MoneyHeist.Data.Entities.Heist", "Heist")
-                        .WithMany()
-                        .HasForeignKey("HeistID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_heist_skill_member_browse_heists_heist_id");
-
-                    b.HasOne("MoneyHeist.Data.Entities.Member", "Member")
-                        .WithMany()
-                        .HasForeignKey("MemberID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_heist_skill_member_browse_members_member_id");
-
-                    b.HasOne("MoneyHeist.Data.Entities.Skill", "Skill")
-                        .WithMany()
-                        .HasForeignKey("SkillID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_heist_skill_member_browse_skills_skill_id");
-
-                    b.Navigation("Heist");
-
-                    b.Navigation("Member");
-
-                    b.Navigation("Skill");
                 });
 
             modelBuilder.Entity("MoneyHeist.Data.Entities.HeistToSkill", b =>

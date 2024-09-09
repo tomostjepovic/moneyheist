@@ -17,14 +17,24 @@ namespace MoneyHeist.DataAccess
         public DbSet<HeistToSkill> HeistToSkills { get; set; }
         public DbSet<HeistStatus> HeistStatuses { get; set; }
         public DbSet<HeistMember> HeistMembers { get; set; }
+        public DbSet<MembeSkillLevelUp> MembeSkillLevelUps { get; set; }
         public DbSet<HeistEligibleMemberBrowse> HeistEligibleMemberBrowse { get; set; }
         public DbSet<HeistAssignedMembersRateBrowse> HeistAssignedMembersRateBrowse { get; set; }
+        public DbSet<HeistSkillMemberBrowse> HeistSkillMemberBrowse { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // TODO: define on cascade delete restrict for needed entities
 
             base.OnModelCreating(builder);
+
+            builder
+                .Entity<HeistSkillMemberBrowse>(eb =>
+                {
+                    eb.HasKey(x => new { x.HeistID, x.MemberID, x.SkillID });
+                    eb.ToView("vw_heist_skill_member_browse");
+                    eb.HasOne(x => x.MemberSkill).WithMany(x => x.HeistSkillMemberBrowses).HasForeignKey(x => new { x.MemberID, x.SkillID });
+                });
 
             builder
                 .Entity<HeistEligibleMemberBrowse>(eb =>
@@ -50,7 +60,9 @@ namespace MoneyHeist.DataAccess
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<HeistToSkill>()
-                .HasIndex(x => new { x.HeistID, x.SkillID, x.Level }).IsUnique();
+                .HasKey(x => new { x.HeistID, x.SkillID, x.Level });
+            builder.Entity<HeistToSkill>()
+                .HasKey(x => new { x.HeistID, x.SkillID, x.Level });
 
             builder.Entity<HeistMember>()
                 .HasIndex(x => new { x.HeistID, x.MemberID }).IsUnique();
@@ -74,7 +86,10 @@ namespace MoneyHeist.DataAccess
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<MemberToSkill>()
-                .HasIndex(x => new { x.MemberID, x.SkillID }).IsUnique();
+                .HasKey(x => new { x.MemberID, x.SkillID });
+
+            builder.Entity<MembeSkillLevelUp>()
+                .HasKey(x => new { x.MemberID, x.HeistID, x.SkillID });
         }
     }
 }

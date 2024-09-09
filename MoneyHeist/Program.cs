@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MoneyHeist.Application.Interfaces;
 using MoneyHeist.Application.Schedulers;
 using MoneyHeist.Application.Services;
+using MoneyHeist.Data.AppSettings;
 using MoneyHeist.DataAccess;
 
 namespace MoneyHeist
@@ -30,6 +31,8 @@ namespace MoneyHeist
                     options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"))
                     .UseSnakeCaseNamingConvention()
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+
+            builder.Services.Configure<HeistSettings>(builder.Configuration.GetSection("HeistSettings"));
 
             var app = builder.Build();
 

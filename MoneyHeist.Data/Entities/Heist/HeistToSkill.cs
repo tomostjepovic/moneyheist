@@ -5,7 +5,6 @@ namespace MoneyHeist.Data.Entities
 {
     public class HeistToSkill
     {
-        public int ID { get; set; }
         public int HeistID { get; set; }
         [ForeignKey(nameof(HeistID))]
         public Heist Heist { get; set; }
