@@ -21,6 +21,7 @@ namespace MoneyHeist
 
             // Register the hosted service
             builder.Services.AddHostedService<HeistStartAndFinishTaskService>();
+            builder.Services.AddHostedService<MemberSkillLevelUpTaskService>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
